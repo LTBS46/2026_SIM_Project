@@ -32,12 +32,14 @@ aspectRatio = width / height
 
 proj = Projection(nearPlane, farPlane, fov, aspectRatio)
 
-
-lightPosition = np.array([10, 0, 10])
+# +front -back 
+# +left ear -right ear
+# +up -down
+lightPosition = np.array([0, 10, 0])
 
 from readply import readply
 
-vertices, triangles = readply("suzanne.ply")
+vertices, triangles = readply("../data/suzanne.ply")
 
 
 # load and show an image with Pillow
@@ -45,18 +47,16 @@ from PIL import Image
 from numpy import asarray
 
 # Open the image form working directory
-image = asarray(Image.open("suzanne.png"))
+image = asarray(Image.open("../data/suzanne.png"))
 
 
-data = dict(
-    [
-        ("viewMatrix", cam.getMatrix()),
-        ("projMatrix", proj.getMatrix()),
-        ("cameraPosition", position),
-        ("lightPosition", lightPosition),
-        ("texture", image),
-    ]
-)
+data = {
+    "viewMatrix": cam.getMatrix(),
+    "projMatrix": proj.getMatrix(),
+    "cameraPosition": position,
+    "lightPosition": lightPosition,
+    "texture": image,
+}
 
 start = time.time()
 

@@ -32,11 +32,7 @@ class GraphicPipeline:
     def VertexShader(self, vertex, data):
         outputVertex = np.zeros((14))
 
-        x = vertex[0]
-        y = vertex[1]
-        z = vertex[2]
-
-        vec = data["projMatrix"] @ data["viewMatrix"] @ [x, y, z, 1.0]
+        vec = data["projMatrix"] @ data["viewMatrix"] @ [*vertex[0:3], 1.0]
 
         outputVertex[0:3] = vec[0:3] / vec[3]
 
@@ -60,34 +56,22 @@ class GraphicPipeline:
 
         # AABBox computation
         # compute vertex coordinates in screen space
-        v0_image = np.array([0, 0])
-        v0_image[0] = (v0[0] + 1.0) / 2.0 * self.width
-        v0_image[1] = ((v0[1] + 1.0) / 2.0) * self.height
+        size_pair = np.array([self.width, self.height])
 
-        v1_image = np.array([0, 0])
-        v1_image[0] = (v1[0] + 1.0) / 2.0 * self.width
-        v1_image[1] = ((v1[1] + 1.0) / 2.0) * self.height
-
-        v2_image = np.array([0, 0])
-        v2_image[0] = (v2[0] + 1.0) / 2.0 * self.width
-        v2_image[1] = (v2[1] + 1.0) / 2.0 * self.height
+        v0_image = (v0[0:2] + 1) / 2.0 * size_pair
+        v1_image = (v1[0:2] + 1) / 2.0 * size_pair
+        v2_image = (v2[0:2] + 1) / 2.0 * size_pair
 
         # compute the two point forming the AABBox
+        max_image = size_pair - 1
+        min_image = np.array([0.0, 0.0])
+
         A = np.min(np.array([v0_image, v1_image, v2_image]), axis=0)
         B = np.max(np.array([v0_image, v1_image, v2_image]), axis=0)
 
-        # cliping the bounding box with the borders of the image
-        max_image = np.array([self.width - 1, self.height - 1])
-        min_image = np.array([0.0, 0.0])
 
-        A = np.max(np.array([A, min_image]), axis=0)
-        B = np.min(np.array([B, max_image]), axis=0)
-
-        # cast bounding box to int
-        A = A.astype(int)
-        B = B.astype(int)
-        # Compensate rounding of int cast
-        B = B + 1
+        A = np.max(np.array([A, min_image]), axis=0).astype(int)
+        B = np.min(np.array([B, max_image]), axis=0).astype(int) + 1
 
         # for each pixel in the bounding box
         for j in range(A[1], B[1]):
