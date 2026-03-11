@@ -12,11 +12,12 @@ class Projection:
         f = self.farPlane
         n = self.nearPlane
         s = 1 / np.tan(self.fov / 2)
+        fn = f / (f - n)
         perspective = np.array(
             [
                 [s / self.aspectRatio, 0, 0, 0],
                 [0, s, 0, 0],
-                [0, 0, f / (f - n), -(f * n) / (f - n)],
+                [0, 0, fn, -n * fn],
                 [0, 0, 1, 0],
             ]
         )

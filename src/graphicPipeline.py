@@ -36,7 +36,10 @@ class GraphicPipeline:
         y = vertex[1]
         z = vertex[2]
 
-        vec = data["projMatrix"] @ data["viewMatrix"] @ [x, y, z, 1.0]
+        vec = np.matmul(
+            data["projMatrix"], np.matmul(data["viewMatrix"], np.array([x, y, z, 1.0]))
+        )
+        # vec = data["projMatrix"] @ data["viewMatrix"] @ [x, y, z, 1.0]
 
         outputVertex[0:3] = vec[0:3] / vec[3]
 
@@ -46,7 +49,7 @@ class GraphicPipeline:
 
         outputVertex[9:12] = data["lightPosition"][0:3] - vertex[0:3]
 
-        outputVertex[12:14] = vertex[6:7]
+        outputVertex[12:14] = vertex[6:8]
 
         return outputVertex
 
