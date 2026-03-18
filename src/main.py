@@ -14,19 +14,14 @@ from graphicPipeline import GraphicPipeline
 pipeline = GraphicPipeline(width, height)
 
 
-from camera import Camera
 from projection import Projection
-from camera_v2 import camera_v2
+from camera_v2 import camera_v2_mat
 
-position = np.array([1.1, 1.1, 1.1])
+cam_position = np.array([1.1, 1.1, 1.1])
+target = np.array([0, 0, 0])
+d_up = np.array([0, 0, 1])
 
-lookAt, right, up = camera_v2(position, np.array([0, 0, 0]), np.array([0, 0, 1]))
-
-print(f"{lookAt = }")
-print(f"{up = }")
-print(f"{right = }")
-
-cam = Camera(position, lookAt, up, right)
+t2 = camera_v2_mat(cam_position, target, d_up)
 
 nearPlane = 0.1
 farPlane = 10.0
@@ -54,9 +49,9 @@ image = asarray(Image.open("../data/suzanne.png"))
 
 
 data = {
-    "viewMatrix": cam.getMatrix(),
+    "viewMatrix": t2,
     "projMatrix": proj.getMatrix(),
-    "cameraPosition": position,
+    "cameraPosition": cam_position,
     "lightPosition": lightPosition,
     "texture": image,
 }
