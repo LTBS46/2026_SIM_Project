@@ -85,11 +85,11 @@ pipeline2.draw(vertices, triangles, data_shadow)
 image2 = deepcopy(pipeline2.image)
 
 # Affichage côte à côte
-plt.subplot(1, 2, 1)
+plt.subplot(2, 1, 1)
 plt.imshow(image1)
 plt.title("Vue cam")
 
-plt.subplot(1, 2, 2)
+plt.subplot(2, 1, 2)
 plt.imshow(image2)
 plt.title("Vue shadow")
 plt.show()
