@@ -1,5 +1,5 @@
 import numpy as np
-
+from numpy.linalg import norm
 width = 1280
 height = 720
 
@@ -16,12 +16,15 @@ pipeline = GraphicPipeline(width, height)
 
 from camera import Camera
 from projection import Projection
-
+from camera_v2 import camera_v2
 
 position = np.array([1.1, 1.1, 1.1])
-lookAt = np.array([-0.577, -0.577, -0.577])
-up = np.array([0.33333333, 0.33333333, -0.66666667])
-right = np.array([-0.57735027, 0.57735027, 0.0])
+
+lookAt, right, up = camera_v2(position, np.array([0, 0, 0]), np.array([0, 0, 1]))
+
+print(f"{lookAt = }")
+print(f"{up = }")
+print(f"{right = }")
 
 cam = Camera(position, lookAt, up, right)
 
