@@ -159,10 +159,19 @@ class GraphicPipeline:
                 )
             )
 
-        for f in fragments:
-            self.fragmentShader(f, data)
-            # depth test
-            if self.depthBuffer[f.y][f.x] > f.depth:
-                self.depthBuffer[f.y][f.x] = f.depth
+        if data["is_shadow"]:
+            for f in fragments:
+                # self.fragmentShader(f, data)
+                # depth test
+                if self.depthBuffer[f.y][f.x] > f.depth:
+                    self.depthBuffer[f.y][f.x] = f.depth
 
-                self.image[f.y][f.x] = f.output
+                    self.image[f.y][f.x] = f.depth
+        else:
+            for f in fragments:
+                self.fragmentShader(f, data)
+                # depth test
+                if self.depthBuffer[f.y][f.x] > f.depth:
+                    self.depthBuffer[f.y][f.x] = f.depth
+
+                    self.image[f.y][f.x] = f.output
