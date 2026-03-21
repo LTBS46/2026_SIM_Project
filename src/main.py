@@ -15,6 +15,7 @@ pipeline = GraphicPipeline(width, height)
 
 
 from projection import Projection
+from orthographic_projection import OrthographicProjection
 from camera_v2 import camera_v2_mat
 
 cam_position = np.array([1.1, 1.1, 1.1])
@@ -85,11 +86,11 @@ pipeline2.draw(vertices, triangles, data_shadow)
 image2 = deepcopy(pipeline2.image)
 
 # Affichage côte à côte
-plt.subplot(2, 1, 1)
+plt.subplot(1, 2, 1)
 plt.imshow(image1)
 plt.title("Vue cam")
 
-plt.subplot(2, 1, 2)
+plt.subplot(1, 2, 2)
 plt.imshow(image2)
 plt.title("Vue shadow")
 plt.show()
