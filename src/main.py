@@ -86,6 +86,8 @@ pipeline1 = GraphicPipeline(width, height)
 pipeline1.draw(vertices, triangles, data)
 image1 = deepcopy(pipeline1.image)
 
+end = time.time()
+print(end - start)
 
 # Affichage côte à côte
 plt.subplot(1, 2, 1)
@@ -97,5 +99,3 @@ plt.imshow(image2)
 plt.title("Vue shadow")
 plt.show()
 
-end = time.time()
-print(end - start)

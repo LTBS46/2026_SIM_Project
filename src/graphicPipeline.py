@@ -22,6 +22,30 @@ class Fragment:
 def edgeSide(p, v0, v1):
     return (p[0] - v0[0]) * (v1[1] - v0[1]) - (p[1] - v0[1]) * (v1[0] - v0[0])
 
+def remove_dup(vert, tri):
+    output = {}
+    idx = 0
+
+    tt = {}
+
+    for i, e in enumerate(vert):
+        e = (*e,)
+        if e in output:
+            tt[i] = output[e]
+        else:
+            output[e] = idx
+            tt[i] = idx
+            idx += 1
+
+    newVertices = np.zeros((idx, STAGE1_FRAGMENT_SIZE))
+
+    for k, v in output.items():
+        newVertices[v] = [*k]
+    
+    for i in range(len(tri)):
+        tri[i,:] = [tt[tri[i, 0]], tt[tri[i, 1]], tt[tri[i, 2]]]
+
+    return newVertices, tri
 
 class GraphicPipeline:
     def __init__(self, width, height):
@@ -61,17 +85,14 @@ class GraphicPipeline:
         # compute vertex coordinates in screen space
         size_pair = np.array([self.width, self.height])
 
-        v0_image = (v0[0:2] + 1) / 2.0 * size_pair
-        v1_image = (v1[0:2] + 1) / 2.0 * size_pair
-        v2_image = (v2[0:2] + 1) / 2.0 * size_pair
+        v_images = (np.array([v0, v1, v2])[:, 0:2] + 1) / 2.0 * size_pair
 
         # compute the two point forming the AABBox
         max_image = size_pair - 1
         min_image = np.array([0.0, 0.0])
 
-        A = np.min(np.array([v0_image, v1_image, v2_image]), axis=0)
-        B = np.max(np.array([v0_image, v1_image, v2_image]), axis=0)
-
+        A = np.min(v_images, axis=0)
+        B = np.max(v_images, axis=0)
 
         A = np.max(np.array([A, min_image]), axis=0).astype(int)
         B = np.min(np.array([B, max_image]), axis=0).astype(int) + 1
@@ -146,23 +167,24 @@ class GraphicPipeline:
 
     def draw(self, vertices, triangles, data):
         # Calling vertex shader
-        self.newVertices = np.zeros((vertices.shape[0], STAGE1_FRAGMENT_SIZE))
+        newVertices = np.zeros((vertices.shape[0], STAGE1_FRAGMENT_SIZE))
 
         for i in range(vertices.shape[0]):
-            self.newVertices[i] = self.VertexShader(vertices[i], data)
+            newVertices[i] = self.VertexShader(vertices[i], data)
 
-        for i in range(self.newVertices.shape[0]):
-            self.newVertices[i, 0:3] = self.newVertices[i, 0:3] / self.newVertices[i, 14]
+        for i in range(newVertices.shape[0]):
+            newVertices[i, 0:3] = newVertices[i, 0:3] / newVertices[i, 14]
 
+        newVertices, triangles = remove_dup(newVertices, triangles)
 
         fragments = []
         # Calling Rasterizer
         for i in triangles:
             fragments.extend(
                 self.Rasterizer(
-                    self.newVertices[i[0]],
-                    self.newVertices[i[1]],
-                    self.newVertices[i[2]],
+                    newVertices[i[0]],
+                    newVertices[i[1]],
+                    newVertices[i[2]],
                 )
             )
 
