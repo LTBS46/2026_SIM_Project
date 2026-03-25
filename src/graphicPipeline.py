@@ -3,11 +3,9 @@ import numpy as np
 STAGE1_FRAGMENT_SIZE = 18
 
 def sample(texture, u, v):
-
     u = int(u * texture.shape[0])
     v = int((1 - v) * texture.shape[1])
-    return texture[v, u] / 255.0
-    pass
+    return texture[u, v] / 255.0
 
 
 class Fragment:
@@ -23,6 +21,7 @@ def edgeSide(p, v0, v1):
     return (p[0] - v0[0]) * (v1[1] - v0[1]) - (p[1] - v0[1]) * (v1[0] - v0[0])
 
 def remove_dup(vert, tri):
+    return vert, tri
     output = {}
     idx = 0
 
@@ -126,7 +125,7 @@ class GraphicPipeline:
 
                     p = np.array([x, y, z])
 
-                    l = v0.shape[0]
+                    l = STAGE1_FRAGMENT_SIZE
                     # interpolating
                     interpolated_data = (
                         v0[3:l] * lambda0 + v1[3:l] * lambda1 + v2[3:l] * lambda2
@@ -137,13 +136,26 @@ class GraphicPipeline:
 
         return fragments
 
-    def fragmentShader(self, fragment, data):
+    def fragmentShader(self, fragment: Fragment, data: dict):
         N = fragment.interpolated_data[0:3]
         N = N / np.linalg.norm(N)
         V = fragment.interpolated_data[3:6]
         V = V / np.linalg.norm(V)
         L = fragment.interpolated_data[6:9]
         L = L / np.linalg.norm(L)
+
+        og_vertice = [*fragment.interpolated_data[12:15], 1]
+
+        vec = data["shadowProj"] @ data["shadowView"] @ og_vertice
+        vec / vec[3]
+
+        vec = (vec + 1) / 2
+
+        shadow_tex = sample(data["shadowMap"], vec[0], vec[1]) * 255
+        shadow_tex = shadow_tex[0]
+
+        if shadow_tex != vec[2]:
+            shadow_tex = 0.5
 
         R = 2 * np.dot(L, N) * N - L
 
@@ -154,13 +166,13 @@ class GraphicPipeline:
         ka = 0.1
         kd = 0.9
         ks = 0.3
-        phong = ka * ambient + kd * diffuse + ks * specular
+        phong = ka * ambient + (kd * diffuse + ks * specular) * shadow_tex
         phong = np.ceil(phong * 4 + 1) / 6.0
 
         texture = sample(
             data["texture"],
-            fragment.interpolated_data[9],
             fragment.interpolated_data[10],
+            fragment.interpolated_data[9],
         )
 
         color = np.array([phong, phong, phong]) * texture

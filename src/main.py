@@ -1,22 +1,22 @@
 import numpy as np
 from numpy.linalg import norm
+import time
+from PIL import Image
+from numpy import asarray
+from copy import deepcopy
+import matplotlib.pyplot as plt
+from graphicPipeline import GraphicPipeline
+from projection import Projection
+from orthographic_projection import OrthographicProjection
+from readply import readply
+from camera_v2 import camera_v2_mat
+
+
+
 width = 1280
 height = 720
 
-import time
-
-start = time.time()
-
-
-from graphicPipeline import GraphicPipeline
-
-
 pipeline = GraphicPipeline(width, height)
-
-
-from projection import Projection
-from orthographic_projection import OrthographicProjection
-from camera_v2 import camera_v2_mat
 
 cam_position = np.array([1.1, 1.1, 1.1])
 target = np.array([0, 0, 0])
@@ -38,28 +38,14 @@ aspectRatio = width / height
 proj = Projection(nearPlane, farPlane, fov, aspectRatio)
 
 
-from readply import readply
 
 vertices, triangles = readply("../data/suzanne.ply")
 
 
 # load and show an image with Pillow
-from PIL import Image
-from numpy import asarray
 
 # Open the image form working directory
 image = asarray(Image.open("../data/suzanne.png"))
-
-
-data = {
-    "viewMatrix": mat_view,
-    "projMatrix": proj.getMatrix(),
-    "cameraPosition": cam_position,
-    "lightPosition": lightPosition,
-    "is_shadow": False,
-    "texture": image,
-}
-
 
 data_shadow = {
     "viewMatrix": mat_shadow,
@@ -67,11 +53,17 @@ data_shadow = {
     "cameraPosition": lightPosition,
     "lightPosition": lightPosition,
     "is_shadow": True,
-    "texture": image,
 }
 
-from copy import deepcopy
-import matplotlib.pyplot as plt
+data = {
+    "viewMatrix": mat_view,
+    "projMatrix": proj.getMatrix(),
+    "cameraPosition": cam_position,
+    "lightPosition": lightPosition,
+    "texture": image,
+    "shadowView": mat_shadow,
+    "shadowProj": proj.getMatrix()
+}
 
 start = time.time()
 
@@ -81,13 +73,19 @@ pipeline2 = GraphicPipeline(width, height)
 pipeline2.draw(vertices, triangles, data_shadow)
 image2 = deepcopy(pipeline2.image)
 
+end = time.time()
+print("time: ", end - start)
+start = end
+
+data["shadowMap"] = image2
+
 # Première vue
 pipeline1 = GraphicPipeline(width, height)
 pipeline1.draw(vertices, triangles, data)
 image1 = deepcopy(pipeline1.image)
 
 end = time.time()
-print(end - start)
+print("time: ", end - start)
 
 # Affichage côte à côte
 plt.subplot(1, 2, 1)
