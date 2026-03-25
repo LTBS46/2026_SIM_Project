@@ -1,6 +1,6 @@
 import numpy as np
 
-STAGE1_FRAGMENT_SIZE = 15
+STAGE1_FRAGMENT_SIZE = 18
 
 def sample(texture, u, v):
 
@@ -70,6 +70,8 @@ class GraphicPipeline:
         outputVertex[12:14] = vertex[6:8]
 
         outputVertex[14] = vec[3]
+
+        outputVertex[15:18] = vertex[0:3]
 
         return outputVertex
 
@@ -165,7 +167,7 @@ class GraphicPipeline:
 
         fragment.output = color
 
-    def draw(self, vertices, triangles, data):
+    def draw(self, vertices, triangles, data: dict):
         # Calling vertex shader
         newVertices = np.zeros((vertices.shape[0], STAGE1_FRAGMENT_SIZE))
 
@@ -188,7 +190,7 @@ class GraphicPipeline:
                 )
             )
 
-        if data["is_shadow"]:
+        if data.get("is_shadow") is True:
             for f in fragments:
                 # depth test
                 if self.depthBuffer[f.y][f.x] > f.depth:
