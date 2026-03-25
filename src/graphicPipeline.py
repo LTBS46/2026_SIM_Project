@@ -1,5 +1,6 @@
 import numpy as np
 
+STAGE1_FRAGMENT_SIZE = 15
 
 def sample(texture, u, v):
 
@@ -30,11 +31,11 @@ class GraphicPipeline:
         self.depthBuffer = np.ones((height, width))
 
     def VertexShader(self, vertex, data):
-        outputVertex = np.zeros((14))
+        outputVertex = np.zeros((STAGE1_FRAGMENT_SIZE))
 
         vec = data["projMatrix"] @ data["viewMatrix"] @ [*vertex[0:3], 1.0]
 
-        outputVertex[0:3] = vec[0:3] / vec[3]
+        outputVertex[0:3] = vec[0:3]
 
         outputVertex[3:6] = vertex[3:6]
 
@@ -43,6 +44,8 @@ class GraphicPipeline:
         outputVertex[9:12] = data["lightPosition"][0:3] - vertex[0:3]
 
         outputVertex[12:14] = vertex[6:8]
+
+        outputVertex[14] = vec[3]
 
         return outputVertex
 
@@ -143,10 +146,14 @@ class GraphicPipeline:
 
     def draw(self, vertices, triangles, data):
         # Calling vertex shader
-        self.newVertices = np.zeros((vertices.shape[0], 14))
+        self.newVertices = np.zeros((vertices.shape[0], STAGE1_FRAGMENT_SIZE))
 
         for i in range(vertices.shape[0]):
             self.newVertices[i] = self.VertexShader(vertices[i], data)
+
+        for i in range(self.newVertices.shape[0]):
+            self.newVertices[i, 0:3] = self.newVertices[i, 0:3] / self.newVertices[i, 14]
+
 
         fragments = []
         # Calling Rasterizer

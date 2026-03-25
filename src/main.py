@@ -74,15 +74,17 @@ import matplotlib.pyplot as plt
 
 start = time.time()
 
-# Première vue
-pipeline1 = GraphicPipeline(width, height)
-pipeline1.draw(vertices, triangles, data)
-image1 = deepcopy(pipeline1.image)
 
 # Deuxième vue (nouvelle instance pour éviter les artefacts)
 pipeline2 = GraphicPipeline(width, height)
 pipeline2.draw(vertices, triangles, data_shadow)
 image2 = deepcopy(pipeline2.image)
+
+# Première vue
+pipeline1 = GraphicPipeline(width, height)
+pipeline1.draw(vertices, triangles, data)
+image1 = deepcopy(pipeline1.image)
+
 
 # Affichage côte à côte
 plt.subplot(2, 1, 1)
