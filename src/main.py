@@ -50,6 +50,7 @@ for vertice in vertices:
     if nd > max_d:
         max_d = nd
 
+proj_shadow = OrthographicProjection(nearPlane, farPlane, -max_d, max_d, max_d, -max_d)
 # load and show an image with Pillow
 # Open the image form working directory
 
@@ -57,7 +58,7 @@ image = asarray(Image.open("../data/suzanne.png"))
 
 data_shadow = {
     "viewMatrix": mat_shadow,
-    "projMatrix": proj.getMatrix(),
+    "projMatrix": proj_shadow.getMatrix(),
     "cameraPosition": lightPosition,
     "lightPosition": lightPosition,
     "is_shadow": True,
@@ -70,14 +71,14 @@ data = {
     "lightPosition": lightPosition,
     "texture": image,
     "shadowView": mat_shadow,
-    "shadowProj": proj.getMatrix()
+    "shadowProj": proj_shadow.getMatrix()
 }
 
 start = time.time()
 
 
 # Deuxième vue (nouvelle instance pour éviter les artefacts)
-pipeline2 = GraphicPipeline(width, height)
+pipeline2 = GraphicPipeline(640, 640)
 pipeline2.draw(vertices, triangles, data_shadow)
 image2 = deepcopy(pipeline2.image)
 
@@ -101,7 +102,7 @@ plt.imshow(image1)
 plt.title("Vue cam")
 
 plt.subplot(1, 2, 2)
-plt.imshow(image2)
+plt.imshow(image2.astype(np.uint8))
 plt.title("Vue shadow")
 plt.show()
 

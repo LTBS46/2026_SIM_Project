@@ -20,19 +20,10 @@ class OrthographicProjection:
         b = self.bottom
         perspective = np.array(
             [
-                [2 / (r - l), 0, 0, 0],
-                [0, 2 / (t - b), 0, 0],
-                [0, 0, -2 / (f - n), 0],
-                [- ((r + l) / (r - l)), 
-                 - ((t + b) / (t - b)), 
-                 - ((f + n) / (f - n)), 
-                 1],
-
-                # Transposée si besoin :
-                # [2 / (r - l), 0, 0, - ((r + l) / (r - l))],
-                # [0, 2 / (t - b), 0, - ((t + b) / (t - b))],
-                # [0, 0, -2 / (f - n), - ((f + n) / (f - n))],
-                # [0, 0, 0, 1],
+                [2 / (r - l), 0, 0, - ((r + l) / (r - l))],
+                [0, 2 / (t - b), 0, - ((t + b) / (t - b))],
+                [0, 0, -2 / (f - n), - ((f + n) / (f - n))],
+                [0, 0, 0, 1],
             ]
         )
 
