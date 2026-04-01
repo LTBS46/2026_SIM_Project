@@ -40,7 +40,18 @@ proj = Projection(nearPlane, farPlane, fov, aspectRatio)
 
 
 
-vertices, triangles = readply("../data/suzanne.ply")
+svertices, striangles = readply("../data/suzanne.ply")
+
+fvert, ftri = readply("../data/floor.ply")
+
+# offset vert id reference
+ftri[:] += svertices.shape[0]
+
+# combine lists
+vertices = np.concatenate((svertices, fvert))
+triangles = np.concatenate((striangles, ftri))
+
+
 
 max_d = 0.0
 
@@ -89,7 +100,7 @@ start = end
 data["shadowMap"] = image2
 
 # Première vue
-pipeline1 = GraphicPipeline(width, height)
+pipeline1 = GraphicPipeline(width, width)
 pipeline1.draw(vertices, triangles, data)
 image1 = deepcopy(pipeline1.image)
 

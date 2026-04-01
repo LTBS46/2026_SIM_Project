@@ -118,18 +118,16 @@ class GraphicPipeline:
                     lambda1 = area2 / area
                     lambda2 = area0 / area
 
-                    # one_over_z = lambda0 * 1/v0[2] + lambda1 * 1/v1[2] + lambda2 * 1/v2[2]
-                    # z = 1/one_over_z
-
                     z = lambda0 * v0[2] + lambda1 * v1[2] + lambda2 * v2[2]
 
-                    p = np.array([x, y, z])
 
-                    l = STAGE1_FRAGMENT_SIZE
+                    one_over_w = lambda0 * 1/v0[14] + lambda1 * 1/v1[14] + lambda2 * 1/v2[14]
+                    w = 1/one_over_w
+
                     # interpolating
                     interpolated_data = (
-                        v0[3:l] * lambda0 + v1[3:l] * lambda1 + v2[3:l] * lambda2
-                    )
+                        v0[3:] * lambda0/v0[14] + v1[3:] * lambda1/v1[14] + v2[3:] * lambda2/v2[14]
+                    )*w
 
                     # Emiting Fragment
                     fragments.append(Fragment(i, j, z, interpolated_data))
@@ -189,7 +187,9 @@ class GraphicPipeline:
         for i in range(newVertices.shape[0]):
             newVertices[i, 0:3] = newVertices[i, 0:3] / newVertices[i, 14]
 
+
         newVertices, triangles = remove_dup(newVertices, triangles)
+
 
         fragments = []
         # Calling Rasterizer
