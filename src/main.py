@@ -61,7 +61,7 @@ for vertice in vertices:
     if nd > max_d:
         max_d = nd
 
-proj_shadow = OrthographicProjection(nearPlane, farPlane, -max_d, max_d, max_d, -max_d)
+proj_shadow = OrthographicProjection(-nearPlane, -farPlane, -max_d, max_d, max_d, -max_d)
 # load and show an image with Pillow
 # Open the image form working directory
 
