@@ -21,6 +21,7 @@ pipeline = GraphicPipeline(width, height)
 cam_position = np.array([1.1, 1.1, 1.1])
 target = np.array([0, 0, 0])
 d_up = np.array([0, 0, 1])
+light_target = target
 
 # +front -back 
 # +left ear -right ear
@@ -28,7 +29,7 @@ d_up = np.array([0, 0, 1])
 lightPosition = np.array([1.1, -1.1, 1.1])
 
 mat_view = camera_v2_mat(cam_position, target, d_up)
-mat_shadow = camera_v2_mat(lightPosition, np.array([0, 0, 0]), np.array([0, 0, 1]))
+mat_shadow = camera_v2_mat(lightPosition, light_target, np.array([0, 0, 1]))
 
 nearPlane = 0.1
 farPlane = 10.0
@@ -41,10 +42,17 @@ proj = Projection(nearPlane, farPlane, fov, aspectRatio)
 
 vertices, triangles = readply("../data/suzanne.ply")
 
+max_d = 0.0
+
+for vertice in vertices:
+    vert = vertice[:3]
+    nd = sum((vert - light_target) ** 2)
+    if nd > max_d:
+        max_d = nd
 
 # load and show an image with Pillow
-
 # Open the image form working directory
+
 image = asarray(Image.open("../data/suzanne.png"))
 
 data_shadow = {
