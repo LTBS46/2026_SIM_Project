@@ -145,15 +145,18 @@ class GraphicPipeline:
         og_vertice = [*fragment.interpolated_data[12:15], 1]
 
         vec = data["shadowProj"] @ data["shadowView"] @ og_vertice
-        vec / vec[3]
+        vec /= vec[3]
+        vec = -vec
 
         vec = (vec + 1) / 2
 
         shadow_tex = sample(data["shadowMap"], vec[0], vec[1]) * 255
         shadow_tex = shadow_tex[0]
 
-        if shadow_tex != vec[2]:
-            shadow_tex = 0.5
+        intensity = 1.0
+
+        if shadow_tex > vec[2]:
+            intensity = 0.5
 
         R = 2 * np.dot(L, N) * N - L
 
@@ -164,8 +167,8 @@ class GraphicPipeline:
         ka = 0.1
         kd = 0.9
         ks = 0.3
-        phong = ka * ambient + (kd * diffuse + ks * specular) * shadow_tex
-        phong = np.ceil(phong * 4 + 1) / 6.0
+        phong = ka * ambient + (kd * diffuse + ks * specular) * intensity
+        #phong = np.ceil(phong * 4 + 1) / 6.0
 
         texture = sample(
             data["texture"],

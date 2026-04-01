@@ -91,7 +91,7 @@ start = time.time()
 # Deuxième vue (nouvelle instance pour éviter les artefacts)
 pipeline2 = GraphicPipeline(640, 640)
 pipeline2.draw(vertices, triangles, data_shadow)
-image2 = deepcopy(pipeline2.image)
+image2 = -deepcopy(pipeline2.image)
 
 end = time.time()
 print("time: ", end - start)
@@ -100,7 +100,7 @@ start = end
 data["shadowMap"] = image2
 
 # Première vue
-pipeline1 = GraphicPipeline(width, width)
+pipeline1 = GraphicPipeline(width, height)
 pipeline1.draw(vertices, triangles, data)
 image1 = deepcopy(pipeline1.image)
 
@@ -113,7 +113,7 @@ plt.imshow(image1)
 plt.title("Vue cam")
 
 plt.subplot(1, 2, 2)
-plt.imshow(image2.astype(np.uint8))
+plt.imshow(image2)
 plt.title("Vue shadow")
 plt.show()
 
