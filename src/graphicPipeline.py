@@ -171,8 +171,8 @@ class GraphicPipeline:
 
         texture = sample(
             data["texture"],
-            fragment.interpolated_data[10],
-            fragment.interpolated_data[9],
+            1 - fragment.interpolated_data[10],
+            1 - fragment.interpolated_data[9],
         )
 
         color = np.array([phong, phong, phong]) * texture
