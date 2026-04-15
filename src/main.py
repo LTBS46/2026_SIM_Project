@@ -4,6 +4,7 @@ import time
 from PIL import Image
 from numpy import asarray
 from copy import deepcopy
+from math import sqrt
 import matplotlib.pyplot as plt
 from graphicPipeline import GraphicPipeline
 from projection import Projection
@@ -49,12 +50,21 @@ fvert, ftri = readply("../data/floor.ply")
 vertices = np.concatenate((svertices, fvert))
 triangles = np.concatenate((striangles, ftri))
 
+ltn = np.linalg.norm(light_target - lightPosition)
+ltr = (light_target - lightPosition) / ltn
+
 max_d = 0.0
 for vertice in vertices:
     vert = vertice[:3]
-    nd = sum((vert - light_target) ** 2)
+    vtn = norm(vert)
+    vtr = vert / vtn
+    nd = sqrt(sum((vert - light_target) ** 2))
+    ndt = abs(np.dot(ltr, vtr))
+    nd *= ndt
     if nd > max_d:
         max_d = nd
+
+print(f"{max_d=}")
         
 proj_shadow = OrthographicProjection(-nearPlane, -farPlane, -max_d, max_d, max_d, -max_d)
 
