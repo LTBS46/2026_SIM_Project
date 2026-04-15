@@ -39,16 +39,28 @@ aspectRatio = width / height
 
 proj = Projection(nearPlane, farPlane, fov, aspectRatio)
 
-svertices, striangles = readply("../data/suzanne.ply")
+entries = ["../data/suzanne.ply", "../data/floor.ply"]
 
-fvert, ftri = readply("../data/floor.ply")
+v_entries = []
+t_entries = []
 
-# offset vert id reference
-# ftri[:] += vertices.shape[0]
+v_off = 0
+tex_id = 0
 
-# combine lists
-vertices = np.concatenate((svertices, fvert))
-triangles = np.concatenate((striangles, ftri))
+for __entry in entries:
+    c_vert, c_tri = readply(__entry)
+    c_vert2 = np.zeros((len(c_vert), 9))
+    c_vert2[:, :8] = c_vert[:, :]
+    c_vert2[:, 8] = tex_id
+    c_tri += v_off
+    v_off += len(c_vert)
+    v_entries.append(c_vert2)
+    t_entries.append(c_tri)
+    tex_id += 1
+
+vertices = np.concatenate(v_entries)
+triangles = np.concatenate(t_entries)
+
 
 ltn = np.linalg.norm(light_target - lightPosition)
 ltr = (light_target - lightPosition) / ltn
@@ -80,27 +92,25 @@ data_shadow = {
     "is_shadow": True,
 }
 
+print(f"{np.ones((1, 1, 3)) = }")
+
 data = {
     "viewMatrix": mat_view,
     "projMatrix": proj.getMatrix(),
     "cameraPosition": cam_position,
     "lightPosition": lightPosition,
-    "texture": image,
+    "textures": [image, np.ones((1, 1, 3))*255],
     "shadowView": mat_shadow,
     "shadowProj": proj_shadow.getMatrix()
 }
 
 start = time.time()
 
-
 # Vue shadow
 pipeline2 = GraphicPipeline(1080, 1080)
 
 # Suzanne
 pipeline2.draw(vertices, triangles, data_shadow)
-
-# Floor
-pipeline2.draw(fvert, ftri, data_shadow)
 
 image2 = -deepcopy(pipeline2.image)
 
@@ -115,11 +125,7 @@ pipeline1 = GraphicPipeline(width, height)
 
 # Suzanne
 data["useTexture"] = True
-pipeline1.draw(svertices, striangles, data)
-
-# Floor
-data["useTexture"] = False
-pipeline1.draw(fvert, ftri, data)
+pipeline1.draw(vertices, triangles, data)
 
 image1 = deepcopy(pipeline1.image)
 

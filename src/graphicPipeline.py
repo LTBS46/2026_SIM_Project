@@ -1,6 +1,7 @@
 import numpy as np
 
-STAGE1_FRAGMENT_SIZE = 18
+STAGE0_FRAGMENT_SIZE = 9
+STAGE1_FRAGMENT_SIZE = 19
 
 def sample(texture, u, v):
     u = np.clip(u, 0.0, 0.9999)
@@ -75,6 +76,8 @@ class GraphicPipeline:
         outputVertex[14] = vec[3]
 
         outputVertex[15:18] = vertex[0:3]
+
+        outputVertex[18] = vertex[8]
 
         return outputVertex
 
@@ -175,14 +178,13 @@ class GraphicPipeline:
         phong = ka * ambient + (kd * diffuse + ks * specular) * intensity
         phong = np.ceil(phong * 4 + 1) / 6.0
 
-        if data.get("useTexture", False):
-            texture = sample(
-                data["texture"],
-                1 - fragment.interpolated_data[10],
-                1 - fragment.interpolated_data[9],
-            )
-        else:
-            texture = np.array([1.0, 1.0, 1.0])  # blanc
+        tid = round(fragment.interpolated_data[15])
+        tex = data["textures"][tid]
+        texture = sample(
+            tex,
+            1 - fragment.interpolated_data[10],
+            1 - fragment.interpolated_data[9],
+        )
 
         color = np.array([phong, phong, phong]) * texture
 
