@@ -1,16 +1,53 @@
-import numpy as np
 from numpy.linalg import norm
-import time
+from time import time
 from PIL import Image
-from numpy import asarray
+from numpy import asarray, array, dot, ones
 from copy import deepcopy
 from math import sqrt
-import matplotlib.pyplot as plt
+from load_entries import load_entries
+from matplotlib.pyplot import imshow, show, title, subplot
 from graphicPipeline import GraphicPipeline
 from projection import Projection
 from orthographic_projection import OrthographicProjection
-from readply import readply
 from camera_v2 import camera_v2_mat
+from sys import argv
+from json import load
+from os.path import abspath, dirname, join
+
+config_opt = None
+
+if len(argv) > 1:
+    config_opt = argv[1]
+else:
+    config_opt = "../data/basic.json"
+
+config_file = abspath(config_opt)
+config = None
+
+with open(config_file, "r") as f:
+    config = load(f)
+config_path = dirname(config_file)
+
+e_cnt = len(config["elements"]) 
+
+entries = [None] * e_cnt
+textures = [None] * e_cnt
+
+white = ones((1, 1, 3)) * 255
+
+for idx, element in enumerate(config["elements"]):
+    assert "object" in element, "Each element must have an 'object' field"
+    entries[idx] = join(config_path, element["object"])
+
+    if "texture" in element:
+        textures[idx] = asarray(Image.open(join(config_path, element["texture"])))
+    else:
+        textures[idx] = white
+
+# le premier ply aura l'id 0, le second l'id 1, etc...
+# le tid (numero de texture) est le même
+vertices, triangles = load_entries(entries)
+
 
 
 width = 1280
@@ -18,16 +55,16 @@ height = 720
 
 pipeline = GraphicPipeline(width, height)
 
-cam_position = np.array([1.1, 1.1, 1.1])
-target = np.array([0, 0, 0])
-d_up = np.array([0, 0, 1])
+cam_position = array([1.1, 1.1, 1.1])
+target = array([0, 0, 0])
+d_up = array([0, 0, 1])
 light_target = target
 
 # +front -back 
 # +left ear -right ear
 # +up -down
 # lightPosition = np.array([0.01, 0.01, 1.5])
-lightPosition = np.array([1.1, -1.1, 1.1])
+lightPosition = array([1.1, -1.1, 1.1])
 
 mat_view = camera_v2_mat(cam_position, target, d_up)
 mat_shadow = camera_v2_mat(lightPosition, light_target, d_up)
@@ -39,30 +76,9 @@ aspectRatio = width / height
 
 proj = Projection(nearPlane, farPlane, fov, aspectRatio)
 
-entries = ["../data/suzanne.ply", "../data/floor.ply"]
-
-v_entries = []
-t_entries = []
-
-v_off = 0
-tex_id = 0
-
-for __entry in entries:
-    c_vert, c_tri = readply(__entry)
-    c_vert2 = np.zeros((len(c_vert), 9))
-    c_vert2[:, :8] = c_vert[:, :]
-    c_vert2[:, 8] = tex_id
-    c_tri += v_off
-    v_off += len(c_vert)
-    v_entries.append(c_vert2)
-    t_entries.append(c_tri)
-    tex_id += 1
-
-vertices = np.concatenate(v_entries)
-triangles = np.concatenate(t_entries)
 
 
-ltn = np.linalg.norm(light_target - lightPosition)
+ltn = norm(light_target - lightPosition)
 ltr = (light_target - lightPosition) / ltn
 
 max_d = 0.0
@@ -70,8 +86,10 @@ for vertice in vertices:
     vert = vertice[:3]
     vtn = norm(vert)
     vtr = vert / vtn
-    nd = sqrt(sum((vert - light_target) ** 2))
-    ndt = (1-(abs(np.dot(ltr, vtr))**2))**.5
+    ndi = vert - light_target
+    nd = sqrt(sum(ndi * ndi))
+    ndti = abs(dot(ltr, vtr))
+    ndt = sqrt(1 - (ndti * ndti))
     nd *= ndt
     if nd > max_d:
         max_d = nd
@@ -82,7 +100,6 @@ proj_shadow = OrthographicProjection(-nearPlane, -farPlane, -max_d, max_d, max_d
 
 # load and show an image with Pillow
 # Open the image form working directory
-image = asarray(Image.open("../data/suzanne.png"))
 
 data_shadow = {
     "viewMatrix": mat_shadow,
@@ -92,53 +109,48 @@ data_shadow = {
     "is_shadow": True,
 }
 
-print(f"{np.ones((1, 1, 3)) = }")
-
 data = {
     "viewMatrix": mat_view,
     "projMatrix": proj.getMatrix(),
     "cameraPosition": cam_position,
     "lightPosition": lightPosition,
-    "textures": [image, np.ones((1, 1, 3))*255],
+    "textures": textures,
     "shadowView": mat_shadow,
     "shadowProj": proj_shadow.getMatrix()
 }
 
-start = time.time()
 
 # Vue shadow
 pipeline2 = GraphicPipeline(1080, 1080)
-
-# Suzanne
+start = time()
 pipeline2.draw(vertices, triangles, data_shadow)
-
+end = time()
+print("time: ", end - start)
 image2 = -deepcopy(pipeline2.image)
 
-end = time.time()
-print("time: ", end - start)
-start = end
-
+# Prep rendu final
 data["shadowMap"] = image2
+pipeline1 = GraphicPipeline(width, height)
+start = time()
 
 # Rendu final
-pipeline1 = GraphicPipeline(width, height)
-
-# Suzanne
-data["useTexture"] = True
 pipeline1.draw(vertices, triangles, data)
 
+# Collection rendu final
+end = time()
+print("time: ", end - start)
 image1 = deepcopy(pipeline1.image)
 
-end = time.time()
-print("time: ", end - start)
-
+###############################################################################
+# Affichage
+###############################################################################
 # Affichage côte à côte
-plt.subplot(1, 2, 1)
-plt.imshow(image1)
-plt.title("Rendu")
+subplot(1, 2, 1)
+imshow(image1)
+title("Rendu")
 
-plt.subplot(1, 2, 2)
-plt.imshow(image2)
-plt.title("Depth map")
-plt.show()
+subplot(1, 2, 2)
+imshow(image2)
+title("Depth map")
+show()
 

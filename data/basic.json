@@ -1,0 +1,6 @@
+{
+    "elements": [
+        {"object":"suzanne.ply", "texture":"suzanne.png"},
+        {"object":"floor.ply"}
+    ]
+}
