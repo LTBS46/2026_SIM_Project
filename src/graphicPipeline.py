@@ -3,8 +3,12 @@ import numpy as np
 STAGE1_FRAGMENT_SIZE = 18
 
 def sample(texture, u, v):
-    u = int(u * texture.shape[0])
-    v = int((1 - v) * texture.shape[1])
+    u = np.clip(u, 0.0, 0.9999)
+    v = np.clip(v, 0.0, 0.9999)
+
+    u = int(u * (texture.shape[0] - 1))
+    v = int((1 - v) * (texture.shape[1] - 1))
+
     return texture[u, v] / 255.0
 
 
@@ -146,7 +150,6 @@ class GraphicPipeline:
 
         vec = data["shadowProj"] @ data["shadowView"] @ og_vertice
         vec /= vec[3]
-        vec = -vec
 
         vec = (vec + 1) / 2
 
@@ -155,7 +158,9 @@ class GraphicPipeline:
 
         intensity = 1.0
 
-        if shadow_tex > vec[2]:
+        bias = 0.01
+
+        if shadow_tex > (vec[2] - bias):
             intensity = 0.5
 
         R = 2 * np.dot(L, N) * N - L
@@ -168,13 +173,16 @@ class GraphicPipeline:
         kd = 0.9
         ks = 0.3
         phong = ka * ambient + (kd * diffuse + ks * specular) * intensity
-        #phong = np.ceil(phong * 4 + 1) / 6.0
+        phong = np.ceil(phong * 4 + 1) / 6.0
 
-        texture = sample(
-            data["texture"],
-            1 - fragment.interpolated_data[10],
-            1 - fragment.interpolated_data[9],
-        )
+        if data.get("useTexture", False):
+            texture = sample(
+                data["texture"],
+                1 - fragment.interpolated_data[10],
+                1 - fragment.interpolated_data[9],
+            )
+        else:
+            texture = np.array([1.0, 1.0, 1.0])  # blanc
 
         color = np.array([phong, phong, phong]) * texture
 

@@ -12,7 +12,6 @@ from readply import readply
 from camera_v2 import camera_v2_mat
 
 
-
 width = 1280
 height = 720
 
@@ -26,10 +25,11 @@ light_target = target
 # +front -back 
 # +left ear -right ear
 # +up -down
+# lightPosition = np.array([0.01, 0.01, 1.5])
 lightPosition = np.array([1.1, -1.1, 1.1])
 
 mat_view = camera_v2_mat(cam_position, target, d_up)
-mat_shadow = camera_v2_mat(lightPosition, light_target, np.array([0, 0, 1]))
+mat_shadow = camera_v2_mat(lightPosition, light_target, d_up)
 
 nearPlane = 0.1
 farPlane = 10.0
@@ -38,33 +38,28 @@ aspectRatio = width / height
 
 proj = Projection(nearPlane, farPlane, fov, aspectRatio)
 
-
-
 svertices, striangles = readply("../data/suzanne.ply")
 
 fvert, ftri = readply("../data/floor.ply")
 
 # offset vert id reference
-ftri[:] += svertices.shape[0]
+# ftri[:] += vertices.shape[0]
 
 # combine lists
 vertices = np.concatenate((svertices, fvert))
 triangles = np.concatenate((striangles, ftri))
 
-
-
 max_d = 0.0
-
 for vertice in vertices:
     vert = vertice[:3]
     nd = sum((vert - light_target) ** 2)
     if nd > max_d:
         max_d = nd
-
+        
 proj_shadow = OrthographicProjection(-nearPlane, -farPlane, -max_d, max_d, max_d, -max_d)
+
 # load and show an image with Pillow
 # Open the image form working directory
-
 image = asarray(Image.open("../data/suzanne.png"))
 
 data_shadow = {
@@ -88,9 +83,15 @@ data = {
 start = time.time()
 
 
-# Deuxième vue (nouvelle instance pour éviter les artefacts)
-pipeline2 = GraphicPipeline(640, 640)
+# Vue shadow
+pipeline2 = GraphicPipeline(1080, 1080)
+
+# Suzanne
 pipeline2.draw(vertices, triangles, data_shadow)
+
+# Floor
+pipeline2.draw(fvert, ftri, data_shadow)
+
 image2 = -deepcopy(pipeline2.image)
 
 end = time.time()
@@ -99,9 +100,17 @@ start = end
 
 data["shadowMap"] = image2
 
-# Première vue
+# Rendu final
 pipeline1 = GraphicPipeline(width, height)
-pipeline1.draw(vertices, triangles, data)
+
+# Suzanne
+data["useTexture"] = True
+pipeline1.draw(svertices, striangles, data)
+
+# Floor
+data["useTexture"] = False
+pipeline1.draw(fvert, ftri, data)
+
 image1 = deepcopy(pipeline1.image)
 
 end = time.time()
@@ -110,10 +119,10 @@ print("time: ", end - start)
 # Affichage côte à côte
 plt.subplot(1, 2, 1)
 plt.imshow(image1)
-plt.title("Vue cam")
+plt.title("Rendu")
 
 plt.subplot(1, 2, 2)
 plt.imshow(image2)
-plt.title("Vue shadow")
+plt.title("Depth map")
 plt.show()
 
