@@ -71,7 +71,7 @@ for vertice in vertices:
     vtn = norm(vert)
     vtr = vert / vtn
     nd = sqrt(sum((vert - light_target) ** 2))
-    ndt = abs(np.dot(ltr, vtr))
+    ndt = (1-(abs(np.dot(ltr, vtr))**2))**.5
     nd *= ndt
     if nd > max_d:
         max_d = nd

@@ -161,7 +161,7 @@ class GraphicPipeline:
 
         intensity = 1.0
 
-        bias = 0.01
+        bias = -0.2
 
         if shadow_tex > (vec[2] - bias):
             intensity = 0.5
