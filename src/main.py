@@ -55,7 +55,7 @@ height = 720
 
 pipeline = GraphicPipeline(width, height)
 
-cam_position = array([1.1, 1.1, 1.6])
+cam_position = array([3, 3, 1.6])
 target = array([0, 0, 0])
 d_up = array([0, 0, 1])
 light_target = target
@@ -132,6 +132,7 @@ image2 = -deepcopy(pipeline2.image)
 
 # Prep rendu final
 data["shadowMap"] = image2
+data["flag"] = "fetch_shadow"
 pipeline1 = GraphicPipeline(width, height)
 print("makeing render")
 start = time()
@@ -144,16 +145,49 @@ end = time()
 print("time: ", end - start)
 image1 = deepcopy(pipeline1.image)
 
+data["flag"] = "calc_shadow"
+pipeline3 = GraphicPipeline(width, height)
+print("makeing render")
+start = time()
+
+# Rendu final
+pipeline3.draw(vertices, triangles, data)
+
+# Collection rendu final
+end = time()
+print("time: ", end - start)
+image3 = deepcopy(pipeline3.image)
+
+data["flag"] = None
+pipeline4 = GraphicPipeline(width, height)
+print("makeing render")
+start = time()
+
+# Rendu final
+pipeline4.draw(vertices, triangles, data)
+
+# Collection rendu final
+end = time()
+print("time: ", end - start)
+image4 = deepcopy(pipeline4.image)
+
 ###############################################################################
 # Affichage
 ###############################################################################
 # Affichage côte à côte
-subplot(1, 2, 1)
+subplot(2, 2, 1)
 imshow(image1)
-title("Rendu")
+title("Rendu (fetch shadow)")
 print("showing depth map")
-subplot(1, 2, 2)
+subplot(2, 2, 2)
 imshow(image2)
 title("Depth map")
+subplot(2, 2, 3)
+imshow(image3)
+title("Rendu 2 (calc shadow)")
+subplot(2, 2, 4)
+imshow(image4)
+title("Rendu 3 (bleed)")
 show()
 
+Image.fromarray((image1 * 255).astype("uint8")).save("render.png")

@@ -158,16 +158,30 @@ class GraphicPipeline:
 
         vec = (vec + 1) / 2
 
-        shadow_tex = sample(data["shadowMap"], vec[0], vec[1]) * 255
+        # o_old_d = vec[2]
+
+        shadow_tex = sample(data["shadowMap"], vec[1], vec[0]) * 255
         shadow_tex = shadow_tex[0]
+
+        if data.get("flag") == "fetch_shadow":
+            fragment.output = np.array([shadow_tex, shadow_tex, shadow_tex])
+            return
+        elif data.get("flag") == "calc_shadow":
+            fragment.output = np.array([o_old_d, o_old_d, o_old_d])
+            return
 
         intensity = 1.0
 
-        bias = 0.3
+        bias = 0.001
+
+        tid = round(fragment.interpolated_data[15])
+
 
         if shadow_tex > o_old_d + bias:
             intensity = 0.5
             fragment.output = np.array([1.0,0,0])
+            if tid == 1 and fragment.y > 500:
+                print(f"{shadow_tex=}, {o_old_d=}")            
             return
 
 
@@ -183,7 +197,6 @@ class GraphicPipeline:
         phong = ka * ambient + (kd * diffuse + ks * specular) * intensity
         phong = np.ceil(phong * 4 + 1) / 6.0
 
-        tid = round(fragment.interpolated_data[15])
         tex = data["textures"][tid]
         texture = sample(
             tex,
