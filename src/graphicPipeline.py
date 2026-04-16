@@ -154,6 +154,8 @@ class GraphicPipeline:
         vec = data["shadowProj"] @ data["shadowView"] @ og_vertice
         vec /= vec[3]
 
+        o_old_d = -vec[2]
+
         vec = (vec + 1) / 2
 
         shadow_tex = sample(data["shadowMap"], vec[0], vec[1]) * 255
@@ -161,10 +163,13 @@ class GraphicPipeline:
 
         intensity = 1.0
 
-        bias = -0.2
+        bias = 0.3
 
-        if shadow_tex > (vec[2] - bias):
+        if shadow_tex > o_old_d + bias:
             intensity = 0.5
+            fragment.output = np.array([1.0,0,0])
+            return
+
 
         R = 2 * np.dot(L, N) * N - L
 

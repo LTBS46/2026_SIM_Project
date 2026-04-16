@@ -55,7 +55,7 @@ height = 720
 
 pipeline = GraphicPipeline(width, height)
 
-cam_position = array([1.1, 1.1, 1.1])
+cam_position = array([1.1, 1.1, 1.6])
 target = array([0, 0, 0])
 d_up = array([0, 0, 1])
 light_target = target
@@ -121,7 +121,9 @@ data = {
 
 
 # Vue shadow
-pipeline2 = GraphicPipeline(1080, 1080)
+shadow_size = 320 # 1080
+pipeline2 = GraphicPipeline(shadow_size, shadow_size)
+print("making shadow map")
 start = time()
 pipeline2.draw(vertices, triangles, data_shadow)
 end = time()
@@ -131,6 +133,7 @@ image2 = -deepcopy(pipeline2.image)
 # Prep rendu final
 data["shadowMap"] = image2
 pipeline1 = GraphicPipeline(width, height)
+print("makeing render")
 start = time()
 
 # Rendu final
@@ -148,7 +151,7 @@ image1 = deepcopy(pipeline1.image)
 subplot(1, 2, 1)
 imshow(image1)
 title("Rendu")
-
+print("showing depth map")
 subplot(1, 2, 2)
 imshow(image2)
 title("Depth map")
