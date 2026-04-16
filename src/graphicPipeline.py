@@ -13,6 +13,56 @@ def sample(texture, u, v):
     return texture[u, v] / 255.0
 
 
+def clip_z0(v0, v1, v2): # none to clip
+    return np.array([v0, v1, v2]), np.array([[0, 1, 2]])
+
+def clip_z1(v0, v1, v2): # v0 to clip
+    raise NotImplementedError("clip_z1 is not implemented yet")
+    nv0 = ...
+    nv1 = ...
+
+    return np.array([nv, v1, v2]), np.array([[0, 1, 2]])
+
+def clip_z2(v0, v1, v2): # v0 and v1 to clip
+    raise NotImplementedError("clip_z2 is not implemented yet")
+    pass
+
+def clip_z3(v0, v1, v2): # clip all
+    return np.array([]).reshape(0, STAGE1_FRAGMENT_SIZE), np.array([]).reshape(0, 3)
+
+def clip_z(v0, v1, v2):
+    b0 = v0[2] < 0
+    b1 = v1[2] < 0
+    b2 = v2[2] < 0
+    if b0:
+        print("v0 to clip")
+    elif b1:
+        print("v1 to clip")
+    elif b2:
+        print("v2 to clip")
+    else:
+        return clip_z0(v0, v1, v2)
+
+    match (b0, b1, b2):
+        case (False, False, False): # None to clip
+            return clip_z0(v0, v1, v2)
+        case (True, False, False): # v0 to clip
+            return clip_z1(v0, v1, v2)
+        case (False, True, False): # v1 to clip
+            return clip_z1(v1, v2, v0)
+        case (False, False, True): # v2 to clip
+            return clip_z1(v2, v0, v1)
+        case (True, True, False): # v0 and v1 to clip
+            return clip_z2(v0, v1, v2)
+        case (True, False, True): # v0 and v2 to clip
+            return clip_z2(v2, v0, v1)
+        case (False, True, True): # v1 and v2 to clip
+            return clip_z2(v1, v2, v0)
+        case (True, True, True): # all to clip
+            return clip_z3(v0, v1, v2)
+        case a:
+            raise ValueError("Invalid case in clip_z:" + str(a))
+
 class Fragment:
     def __init__(self, x: int, y: int, depth: float, interpolated_data):
         self.x = x
@@ -26,7 +76,6 @@ def edgeSide(p, v0, v1):
     return (p[0] - v0[0]) * (v1[1] - v0[1]) - (p[1] - v0[1]) * (v1[0] - v0[0])
 
 def remove_dup(vert, tri):
-    return vert, tri
     output = {}
     idx = 0
 
@@ -160,7 +209,7 @@ class GraphicPipeline:
 
         # o_old_d = vec[2]
 
-        shadow_tex = sample(data["shadowMap"], vec[1], vec[0]) * 255
+        shadow_tex = sample(data["shadowMap"], vec[1], 1-vec[0]) * 255
         shadow_tex = shadow_tex[0]
 
         if data.get("flag") == "fetch_shadow":
@@ -172,17 +221,17 @@ class GraphicPipeline:
 
         intensity = 1.0
 
-        bias = 0.001
+        bias = 0.02
 
         tid = round(fragment.interpolated_data[15])
 
 
         if shadow_tex > o_old_d + bias:
             intensity = 0.5
-            fragment.output = np.array([1.0,0,0])
+            """ fragment.output = np.array([1.0,0,0])
             if tid == 1 and fragment.y > 500:
                 print(f"{shadow_tex=}, {o_old_d=}")            
-            return
+            return """
 
 
         R = 2 * np.dot(L, N) * N - L
@@ -215,12 +264,25 @@ class GraphicPipeline:
         for i in range(vertices.shape[0]):
             newVertices[i] = self.VertexShader(vertices[i], data)
 
+        if not data.get("is_shadow", False): # probably do not work on orthographic
+            nnV, nnT = [None] *triangles.shape[0], [None] *triangles.shape[0]
+            vc = 0
+
+            for i in range(triangles.shape[0]):
+                t = triangles[i]
+                nnV[i], nnT[i] = clip_z(newVertices[t[0]],newVertices[t[1]],newVertices[t[2]])
+                nnT[i] += vc
+                vc += len(nnV[i])
+
+            newVertices = np.concatenate(nnV)
+            triangles = np.concatenate(nnT)
+
+            newVertices, triangles = remove_dup(newVertices, triangles)
+
         for i in range(newVertices.shape[0]):
             newVertices[i, 0:3] = newVertices[i, 0:3] / newVertices[i, 14]
 
-
         newVertices, triangles = remove_dup(newVertices, triangles)
-
 
         fragments = []
         # Calling Rasterizer
