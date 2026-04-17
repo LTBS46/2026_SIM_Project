@@ -1,6 +1,7 @@
 {
     "elements": [
         {"object":"suzanne.ply", "texture":"suzanne.png"},
-        {"object":"floor.ply"}
+        {"object":"floor.ply"},
+        {"object":"cube.ply", "offset":[0, 0, 2]}
     ]
 }

@@ -1,14 +1,19 @@
 from readply import readply
 from numpy import zeros, concatenate
 
-def load_entries(entries: list[str]):
-    v_entries = [None] * len(entries)
-    t_entries = [None] * len(entries)
-    
+def load_entries(entries: list[str], offset: list):
+    l = len(entries)
+
+    assert l == len(offset), "The number of entries and offsets must be the same"
+
+    v_entries = [None] * l
+    t_entries = [None] * l
+
     v_off = 0
     tex_id = 0
-    for __entry in entries:
+    for __entry, __offset in zip(entries, offset):
         c_vert, c_tri = readply(__entry)
+        c_vert[:, :3] += __offset
         c_vert2 = zeros((len(c_vert), 9))
         c_vert2[:, :8] = c_vert[:, :]
         c_vert2[:, 8] = tex_id

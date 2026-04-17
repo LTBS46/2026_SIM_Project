@@ -32,12 +32,14 @@ e_cnt = len(config["elements"])
 
 entries = [None] * e_cnt
 textures = [None] * e_cnt
+offset = [None] * e_cnt
 
 white = ones((1, 1, 3)) * 255
 
 for idx, element in enumerate(config["elements"]):
     assert "object" in element, "Each element must have an 'object' field"
     entries[idx] = join(config_path, element["object"])
+    offset[idx] = array(element.get("offset", [0, 0, 0]))
 
     if "texture" in element:
         textures[idx] = asarray(Image.open(join(config_path, element["texture"])))
@@ -46,7 +48,7 @@ for idx, element in enumerate(config["elements"]):
 
 # le premier ply aura l'id 0, le second l'id 1, etc...
 # le tid (numero de texture) est le même
-vertices, triangles = load_entries(entries)
+vertices, triangles = load_entries(entries, offset)
 
 
 
@@ -121,7 +123,7 @@ data = {
 
 
 # Vue shadow
-shadow_size = 320 # 1080
+shadow_size = 1080 # 1080
 pipeline2 = GraphicPipeline(shadow_size, shadow_size)
 print("making shadow map")
 start = time()
@@ -132,33 +134,6 @@ image2 = -deepcopy(pipeline2.image)
 
 # Prep rendu final
 data["shadowMap"] = image2
-data["flag"] = "fetch_shadow"
-pipeline1 = GraphicPipeline(width, height)
-print("makeing render")
-start = time()
-
-# Rendu final
-pipeline1.draw(vertices, triangles, data)
-
-# Collection rendu final
-end = time()
-print("time: ", end - start)
-image1 = deepcopy(pipeline1.image)
-
-data["flag"] = "calc_shadow"
-pipeline3 = GraphicPipeline(width, height)
-print("makeing render")
-start = time()
-
-# Rendu final
-pipeline3.draw(vertices, triangles, data)
-
-# Collection rendu final
-end = time()
-print("time: ", end - start)
-image3 = deepcopy(pipeline3.image)
-
-data["flag"] = None
 pipeline4 = GraphicPipeline(width, height)
 print("makeing render")
 start = time()
@@ -175,19 +150,13 @@ image4 = deepcopy(pipeline4.image)
 # Affichage
 ###############################################################################
 # Affichage côte à côte
-subplot(2, 2, 1)
-imshow(image1)
-title("Rendu (fetch shadow)")
-print("showing depth map")
-subplot(2, 2, 2)
+subplot(1, 2, 2)
 imshow(image2)
 title("Depth map")
-subplot(2, 2, 3)
-imshow(image3)
-title("Rendu 2 (calc shadow)")
-subplot(2, 2, 4)
+subplot(1, 2, 1)
+print("showing render")
 imshow(image4)
 title("Rendu 3 (bleed)")
 show()
 
-Image.fromarray((image1 * 255).astype("uint8")).save("render.png")
+Image.fromarray((image4 * 255).astype("uint8")).save("render.png")
