@@ -65,8 +65,10 @@ light_target = target
 # +front -back 
 # +left ear -right ear
 # +up -down
-# lightPosition = np.array([0.01, 0.01, 1.5])
+
 lightPosition = array([1.1, -1.1, 1.1])
+# Pour mettre la lumière au-dessus de la scène : 
+# lightPosition = array([0.01, 0.01, 1.5])
 
 mat_view = camera_v2_mat(cam_position, target, d_up)
 mat_shadow = camera_v2_mat(lightPosition, light_target, d_up)
@@ -95,8 +97,6 @@ for vertice in vertices:
     nd *= ndt
     if nd > max_d:
         max_d = nd
-
-print(f"{max_d=}")
         
 proj_shadow = OrthographicProjection(-nearPlane, -farPlane, -max_d, max_d, max_d, -max_d)
 
@@ -125,7 +125,7 @@ data = {
 # Vue shadow
 shadow_size = 1080 # 1080
 pipeline2 = GraphicPipeline(shadow_size, shadow_size)
-print("making shadow map")
+print("Making the shadow map")
 start = time()
 pipeline2.draw(vertices, triangles, data_shadow)
 end = time()
@@ -135,7 +135,7 @@ image2 = -deepcopy(pipeline2.image)
 # Prep rendu final
 data["shadowMap"] = image2
 pipeline4 = GraphicPipeline(width, height)
-print("makeing render")
+print("Making the final render")
 start = time()
 
 # Rendu final
@@ -154,9 +154,10 @@ subplot(1, 2, 2)
 imshow(image2)
 title("Depth map")
 subplot(1, 2, 1)
-print("showing render")
+print("Showing the render")
 imshow(image4)
-title("Rendu 3 (bleed)")
-show()
+title("Rendu")
 
 Image.fromarray((image4 * 255).astype("uint8")).save("render.png")
+
+show()
