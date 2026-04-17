@@ -261,8 +261,9 @@ class GraphicPipeline:
         ka = 0.1
         kd = 0.9
         ks = 0.3
+
         phong = ka * ambient + (kd * diffuse + ks * specular) * intensity
-        # phong = np.ceil(phong * 4 + 1) / 6.0
+        phong = np.ceil(phong * 4 + 1) / 6.0
 
         tex = data["textures"][tid]
         texture = sample(
